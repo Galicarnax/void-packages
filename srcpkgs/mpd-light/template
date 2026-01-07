@@ -1,0 +1,72 @@
+# Template file for 'mpd-light'
+pkgname=mpd-light
+version=0.24.6
+revision=1
+build_style=meson
+configure_args="-Ddocumentation=disabled -Dchromaprint=disabled -Dsidplay=disabled
+ -Dadplug=disabled -Dsndio=disabled -Dao=disabled -Dffmpeg=disabled
+ -Dpipewire=disabled -Dpipe=false -Dsnapcast=false -Djack=disabled
+ -Dmodplug=disabled -Dpulse=disabled -Dshout=disabled -Dsndfile=disabled
+ -Dsidplay=disabled -Dneighbor=false -Dudisks=disabled
+ -Dwebdav=disabled -Ddsd=false -Dwavpack=disabled -Dzzip=disabled
+ -Dbzip2=disabled -Dzeroconf=disabled -Dsmbclient=disabled
+ -Dcdio_paranoia=disabled -Dqobuz=disabled -Diso9660=disabled -Dtremor=disabled
+ -Dfluidsynth=disabled -Dmikmod=disabled -Dmpcdec=disabled -Dmpg123=disabled
+ -Dopus=disabled -Dwildmidi=disabled -Dopenal=disabled
+ -Dmms=disabled -Dupnp=disabled -Dnfs=disabled -Daudiofile=disabled
+ -Dfaad=disabled -Dgme=disabled -Dipv6=disabled -Dlocal_socket=false
+ -Dwave_encoder=false -Dvorbisenc=disabled -Dlame=enabled -Dtwolame=disabled
+ -Dshine=disabled -Dfifo=false -Dhttpd=true -Drecorder=false -Doss=disabled
+ -Diconv=disabled -Dpcre=disabled -Dzlib=disabled -Dsqlite=disabled
+ -Dlibsamplerate=disabled -Dsoxr=enabled -Dcue=true -Dtcp=true
+ -Dlibmpdclient=enabled -Dvorbis=enabled -Dcurl=enabled -Did3tag=enabled
+ -Dflac=enabled -Dmad=enabled -Dalsa=enabled -Ddbus=disabled -Dicu=enabled"
+conf_files="/etc/mpd.conf"
+hostmakedepends="pkg-config"
+makedepends="libcurl-devel libid3tag-devel libmad-devel lame-devel libmpdclient-devel
+ icu-devel libsoxr-devel fmt-devel libcue-devel libflac-devel libvorbis-devel
+ alsa-lib-devel"
+depends="libcap-progs"
+checkdepends="gtest-devel"
+short_desc="Flexible, powerful, server-side application for playing music"
+maintainer="Daniel Eyßer <daniel.eysser@gmail.com>"
+license="GPL-2.0-or-later"
+homepage="https://www.musicpd.org/"
+changelog="https://raw.githubusercontent.com/MusicPlayerDaemon/MPD/master/NEWS"
+
+#do_fetch() {
+#   git clone --depth=1 https://github.com/MusicPlayerDaemon/MPD.git ${wrksrc}
+#   cd ${wrksrc}
+#}
+
+
+distfiles="https://www.musicpd.org/download/mpd/${version%.*}/mpd-${version}.tar.xz"
+checksum=8ce34a010577feb42999a96d867325c6d38bf7ae1b7a57f878d7e548c1fd1fa9
+LDFLAGS="-Wl,-z,stack-size=1048576"
+
+system_accounts="mpd"
+mpd_homedir="/var/lib/mpd"
+mpd_groups="audio"
+
+make_dirs="
+ /var/lib/mpd 0755 mpd mpd
+ /var/lib/mpd/playlists 0755 mpd mpd"
+
+
+if [ "$XBPS_CHECK_PKGS" ]; then
+	configure_args+=" -Dtest=true"
+fi
+
+post_install() {
+	vconf doc/mpdconf.example mpd.conf
+	vsconf doc/mpdconf.example
+	sed \
+		-e '/^#playlist_directory/c playlist_directory "/var/lib/mpd/playlists"' \
+		-e '/^#db_file/c db_file "/var/lib/mpd/mpd.db"' \
+		-e '/^#pid_file/c pid_file "/run/mpd/mpd.pid"' \
+		-e '/^#state_file/c state_file "/var/lib/mpd/mpdstate"' \
+		-e '/^#user/c user "mpd"' \
+		-i ${DESTDIR}/etc/mpd.conf
+
+	vsv mpd
+}
