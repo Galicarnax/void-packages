@@ -1,6 +1,6 @@
 # Template file for 'mpd-light'
 pkgname=mpd-light
-version=0.24.6
+version=0.24.9
 revision=1
 build_style=meson
 configure_args="-Ddocumentation=disabled -Dchromaprint=disabled -Dsidplay=disabled
